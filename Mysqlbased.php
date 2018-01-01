@@ -15,7 +15,7 @@
 namespace ElkArte\sources\subs\CacheMethod;
 
 /**
- * PostgreSQLbased caching stores the cache data in a MySQL database
+ * MySQLbased caching stores the cache data in a MySQL database
  * The performance gain may or may not exist depending on many factors.
  *
  * It requires the a MySQL database greater than 5.0.0 to work

@@ -103,10 +103,11 @@ class Mysqlbased extends Cache_Method_Abstract
 		$ttl	= time() - $ttl;
 		$query	= 'SELECT value FROM {db_prefix}cache WHERE ckey = \'' . $db->escape_string($key) . '\' AND ttl >= ' . $ttl . ' LIMIT 1';
 		$result = $db->query('', $query);
-		$value	= $db->fetch_assoc($result)['value'];
+                $value  = !empty($value) ? $value : null;
 
-		return !empty($value) ? $value : null;
+                $this->is_miss = $value === null;
 
+                return $value;
 	}
 
 	/**

@@ -32,12 +32,10 @@ class Mysqlbased extends Cache_Method_Abstract
 	 */
 	public function __construct($options)
 	{
-
-		global $modSettings, $db_name;
-
-		$modSettings['disableQueryCheck'] = true;
+		global $db_name;
 
 		parent::__construct($options);
+        self::disableQueryCheck();
 
 		$db = database();
 		if( $db->num_rows ( $db->query('', 'SHOW TABLES FROM '.$db_name.' LIKE \'{db_prefix}cache\';') ) == 0 );
@@ -58,6 +56,8 @@ class Mysqlbased extends Cache_Method_Abstract
 			);
 		}
 
+        self::disableQueryCheck(false);
+
 		return true;
 	}
 
@@ -73,9 +73,7 @@ class Mysqlbased extends Cache_Method_Abstract
 	 */
 	public function put($key, $value, $ttl = 120)
 	{
-		global $modSettings;
-
-		$modSettings['disableQueryCheck'] = true;
+        self::disableQueryCheck(true);
 
 		$db	= database();
 		$key	= $db->escape_string($key);
@@ -86,6 +84,8 @@ class Mysqlbased extends Cache_Method_Abstract
 		$query	= 'INSERT INTO {db_prefix}cache (ckey, value, ttl, ckey_hash ) VALUES ( \''.$key.'\', \''.$value.'\', \''.$ttl.'\', MD5(\''.$key.'\') )
 				ON DUPLICATE KEY UPDATE value = \''.$value.'\', ttl = \''.$ttl.'\'';
 		$result = $db->query('', $query);
+        
+        self::disableQueryCheck(false);
 
 		return $result;
 	}
@@ -95,19 +95,19 @@ class Mysqlbased extends Cache_Method_Abstract
 	 */
 	public function get($key, $ttl = 120)
 	{
-		global $modSettings;
-
-		$modSettings['disableQueryCheck'] = true;
+        self::disableQueryCheck(true);
 
 		$db	= database();
 		$ttl	= time() - $ttl;
 		$query	= 'SELECT value FROM {db_prefix}cache WHERE ckey = \'' . $db->escape_string($key) . '\' AND ttl >= ' . $ttl . ' LIMIT 1';
 		$result = $db->query('', $query);
-                $value  = !empty($value) ? $value : null;
+        $value  = !empty($value) ? $value : null;
 
-                $this->is_miss = $value === null;
+        $this->is_miss = $value === null;
 
-                return $value;
+        self::disableQueryCheck(false);
+        
+        return $value;
 	}
 
 	/**
@@ -115,13 +115,13 @@ class Mysqlbased extends Cache_Method_Abstract
 	 */
 	public function clean($type = '')
 	{
-		global $modSettings;
-
-		$modSettings['disableQueryCheck'] = true;
+        self::disableQueryCheck(true);
 
 		$db	= database();
 		$query	= 'DELETE FROM {db_prefix}cache;';
 		$result = $db->query('', $query);
+
+        self::disableQueryCheck(false);
 
 		return $result;
 
@@ -133,8 +133,9 @@ class Mysqlbased extends Cache_Method_Abstract
 	public function isAvailable()
 	{
 		$db = database();
-		if( ($db->db_title() == 'MySQL') && (version_compare($db->db_server_version(), '5.0.0', '>=')) )
+		if( ($db->db_title() == 'MySQL') && (version_compare($db->db_server_version(), '5.0.0', '>=')) ) {
 			return true;
+        }
 
 		return false;
 	}
@@ -144,7 +145,7 @@ class Mysqlbased extends Cache_Method_Abstract
 	 */
 	public function details()
 	{
-		return array('title' => $this->title, 'version' => '1.0.0');
+		return array('title' => $this->title, 'version' => '1.0.2');
 	}
 
 	/**
@@ -158,4 +159,26 @@ class Mysqlbased extends Cache_Method_Abstract
 	{
 
 	}
+
+    private function disableQueryCheck($state = true)
+	{
+		static $oldModSetting = null;
+		global $modSettings;
+
+		if(isset($modSettings['disableQueryCheck']) && ($state == true)) {
+			$oldModSetting	= $modSettings['disableQueryCheck'];
+		}
+
+		if($state == false && is_null($oldModSetting)) {
+			unset($modSettings['disableQueryCheck']);
+		}
+		else if( $state == false) {
+			$modSettings['disableQueyCheck'] = $oldModSetting;
+		}
+		else {
+			$modSettings['disableQueryCheck'] = $state;
+		}
+
+	}
+
 }

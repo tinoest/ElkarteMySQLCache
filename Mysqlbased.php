@@ -73,6 +73,8 @@ class Mysqlbased extends Cache_Method_Abstract
 	 */
 	public function put($key, $value, $ttl = 120)
 	{
+        global $db_prefix;
+
         self::disableQueryCheck(true);
 
 		$db	= database();
@@ -81,7 +83,7 @@ class Mysqlbased extends Cache_Method_Abstract
 		$ttl	= time();
 		$ttl	= $db->escape_string($ttl);
 
-		$query	= 'INSERT INTO {db_prefix}cache (ckey, value, ttl, ckey_hash ) VALUES ( \''.$key.'\', \''.$value.'\', \''.$ttl.'\', MD5(\''.$key.'\') )
+		$query	= 'INSERT INTO '.$db_prefix.'cache (ckey, value, ttl, ckey_hash ) VALUES ( \''.$key.'\', \''.$value.'\', \''.$ttl.'\', MD5(\''.$key.'\') )
 				ON DUPLICATE KEY UPDATE value = \''.$value.'\', ttl = \''.$ttl.'\'';
 		$result = $db->query('', $query);
         

@@ -8,7 +8,7 @@
  * @license   BSD http://opensource.org/licenses/BSD-3-Clause
  * @mod       MySQLCache Cache - MySQL based caching mechanism
  *
- * @version 1.0.0
+ * @version 1.0.3
  *
  */
 
